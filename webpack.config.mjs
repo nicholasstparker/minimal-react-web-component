@@ -3,6 +3,7 @@ import fs from "node:fs";
 import {fileURLToPath} from "node:url";
 import TerserPlugin from "terser-webpack-plugin";
 import {CleanWebpackPlugin} from "clean-webpack-plugin";
+import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,16 +36,19 @@ export default {
     module: {
         rules: [
             {
-                test: /\.[jt]sx?$/,
-                exclude: /node_modules/,
-                use: "babel-loader"
-            }
-        ]
+                test: /.([cm]?ts|tsx)$/,
+                loader: 'ts-loader',
+            },
+        ],
     },
     resolve: {
-        extensions: [".js", ".jsx", ".ts", ".tsx"]
+        extensions: ['.tsx', '.ts', '.js'],
+        extensionAlias: {
+            '.ts': ['.js', '.ts'],
+            '.cts': ['.cjs', '.cts'],
+            '.mts': ['.mjs', '.mts'],
+        },
     },
-    mode: "production",
     optimization: {
         splitChunks: {
             cacheGroups: {
@@ -75,6 +79,7 @@ export default {
         )],
     },
     plugins: [
+        new ForkTsCheckerWebpackPlugin(),
         new CleanWebpackPlugin()
     ]
 };

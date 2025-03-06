@@ -22,7 +22,7 @@ To create your own components, follow this example:
 4. In the new `index.ts`, add the following code:
   ```
   import r2wc from "@r2wc/react-to-web-component";
-  import SimpleBox from "./MyComponent.tsx";
+  import SimpleBox from "./MyComponent";
   
   const component = r2wc(MyComponent, { props: {} });
   
