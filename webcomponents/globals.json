@@ -1,0 +1,5 @@
+{
+    "react": "React",
+    "react-dom/client": "ReactDOM",
+    "react/jsx-runtime": "ReactJSXRuntime"
+  }

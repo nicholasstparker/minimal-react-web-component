@@ -1,40 +1,29 @@
 import path from "path";
 import url from "url";
-import fs from "fs";
 import { build, defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import typescript from '@rollup/plugin-typescript';
-// import globals from "./webcomponents/globals.json" with { type: "json" };
+import globals from "./webcomponents/globals.json" with { type: "json" };
 import { writeFile } from "fs/promises";
 
-/*
 const liteRollup = {
   external: Object.keys(globals),
   output: {
     globals
   },
 }
-*/
-const liteRollup = {}
-
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const breadCrumbsWCConfig = {
+const muiModalWCConfig = {
   plugins: [],
-  entry: path.resolve(__dirname, "./webcomponents/bread-crumbs.js"),
-  name: "bread-crumbs",
+  entry: path.resolve(__dirname, "./webcomponents/mui-modal.ts"),
+  name: "mui-modal",
   formats: ["umd"],
 };
-const navLinksWCConfig = {
+const simpleBoxWCConfig = {
   plugins: [],
-  entry: path.resolve(__dirname, "./webcomponents/nav-links.js"),
-  name: "nav-links",
-  formats: ["umd"],
-};
-const pageContentWCConfig = {
-  plugins: [],
-  entry: path.resolve(__dirname, "./webcomponents/page-content.js"),
-  name: "page-content",
+  entry: path.resolve(__dirname, "./webcomponents/simple-box.ts"),
+  name: "simple-box",
   formats: ["umd"],
 };
 
@@ -58,7 +47,10 @@ const getConfiguration = ({ plugins, ...library }, mode) => {
           ],
         }
       }),
-      typescript(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        outDir: library.name === "dependencies" ? "./dist" : `./dist/${library.name}`,
+      }),
       ...plugins
     ],
     build: {
@@ -67,7 +59,7 @@ const getConfiguration = ({ plugins, ...library }, mode) => {
         ...library,
         fileName: (format) => `${library.name}.${mode}.${format}.js`
       },
-      "outDir": "./dist",
+      outDir: library.name === "dependencies" ? "./dist" : `./dist/${library.name}`,
       rollupOptions: mode === "lite" ? liteRollup : {},
     },
   }));
@@ -90,35 +82,15 @@ const viteBuild = (configFactory) => {
 };
 
 const buildLibraries = async () => {
-  const componentsDir = path.resolve(__dirname, "src/components");
-//  await createDependencyRollup();
+  await createDependencyRollup();
 
-  const viteprocs = []
-
-  fs.readdirSync(componentsDir).forEach((item) => {
-    const itemPath = path.join(componentsDir, item);
-    const stats = fs.statSync(itemPath);
-    if (stats.isDirectory()) {
-        const componentIndexPath = path.join(itemPath, "index.ts");
-        if (fs.existsSync(componentIndexPath)) {
-            // entry[item] = componentIndexPath;
-            viteprocs.push(
-              viteBuild(getConfiguration({
-                plugins: [],
-                entry: componentIndexPath,
-                name: item,
-                formats: ["umd"],
-              }, 'full'))
-            )
-            console.info('Adding index.ts file to entry in ', itemPath);
-        } else {
-            console.warn(`No index.ts file found in ${itemPath}`);
-        }
-    }
-  });
-
-
-  await Promise.all(viteprocs);
+  await Promise.all([].concat(
+    ...["lite", "full"].map(mode => [
+      viteBuild(getConfiguration(muiModalWCConfig, mode)),
+      viteBuild(getConfiguration(simpleBoxWCConfig, mode)),
+    ]),
+    [viteBuild(getConfiguration(dependenciesConfig, "full"))]
+  ));
 };
 
 buildLibraries();
